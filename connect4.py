@@ -1,43 +1,27 @@
+# this is a game called connect4
+# you can play it with your friend or AI
+
+
 import math
 import random
 import pygame
-import time
-import sys
-
-sys.setrecursionlimit(100000)
-
-pygame.init()
-width = 700
-height = 600
-row = 6
-column = 7
-pygame.display.set_caption("Connect 4")
-win = pygame.display.set_mode((width, height))
-black = (0, 0, 0)
-white = (255, 255, 255)
-red = (255, 0, 0)
-yellow = (255, 255, 0)
-c = red
-z = 1
-grid = [[0 for x in range(column)] for y in range(row)]
 
 
-def drawGrid(color, row, column):
-    for i in range(1, column):
+def drawGrid(color):
+    s = 20
+    e = 580
+    d = 93
+    w = 5
+    for i in range(8):
         pygame.draw.line(win, color,
-                         (i * width / column, 0), (i * width / column, height))
-    for i in range(1, row):
+                         (s+d*i, s), (s+d*i, e), w)
+    for i in range(7):
         pygame.draw.line(win, color,
-                         (0, i * height / row), (width, i * height / row))
+                         (s, s+d*i), (e+d, s+d*i), w)
 
 
-def convert(x, y):
-    return [y * row // height, x * column // width]
-
-
-def colorIt(color, x, y):
-    pygame.draw.circle(win, color, (round(y * width / column)+50, round(x *
-                                                                        height / row)+50), 50)
+def nought(color, center):
+    pygame.draw.circle(win, color, center, 43)
 
 
 def isWinner(turn, x, y):
@@ -49,9 +33,9 @@ def isWinner(turn, x, y):
                 if streak == 4:
                     return True
             else:
+                streak = 0
                 if i > 0:
                     break
-                streak = 0
         except:
             pass
     streak = 0
@@ -62,9 +46,9 @@ def isWinner(turn, x, y):
                 if streak == 4:
                     return True
             else:
+                streak = 0
                 if i > 0:
                     break
-                streak = 0
         except:
             pass
     streak = 0
@@ -75,9 +59,9 @@ def isWinner(turn, x, y):
                 if streak == 4:
                     return True
             else:
+                streak = 0
                 if i > 0:
                     break
-                streak = 0
         except:
             pass
     streak = 0
@@ -88,51 +72,114 @@ def isWinner(turn, x, y):
                 if streak == 4:
                     return True
             else:
+                streak = 0
                 if i > 0:
                     break
-                streak = 0
         except:
             pass
-
     return False
 
 
 def isTie():
-    for i in range(column):
-        for j in range(row):
+    for i in range(6):
+        for j in range(7):
             if grid[i][j] == 0:
                 return False
     return True
 
 
+# def reset():
+#     global grid, turn, undoaix, undoaiy, undox, undoy
+#     undoaix, undoaiy, undox, undoy = -1, -1, -1, -1
+#     for i in range(3):
+#         for j in range(3):
+#             grid[i][j] = " "
+#     turn = random.choice([X, O])
+#     play()
+
+
+# def undo(x, y):
+#     global grid, turn
+#     grid[x][y] = " "
+#     turn = opponent(turn)
+#     xcord, ycord = coordinates(x, y)
+#     win.blit(undopic, (xcord-10, ycord-10))
+#     if turn == X:
+#         drawGrid(red)
+#     else:
+#         drawGrid(green)
+#     pygame.draw.rect(win, blue, (24+93*x, 24+93*y, 86, 86))
+
+
+def endText(msg):
+    global grid, turn
+    for i in range(6):
+        for j in range(7):
+            grid[i][j] = 0
+
+    text = pygame.font.SysFont(
+        None, 100).render(msg, True, white)
+    win.blit(text, [350 - 20*len(msg), 250])
+
+    pygame.draw.rect(win, white, (680, 400, 110, 70))
+    text = pygame.font.SysFont(
+        None, 40).render("Play", True, black)
+    win.blit(text, [700, 410])
+    text = pygame.font.SysFont(
+        None, 40).render("Again!", True, black)
+    win.blit(text, [690, 440])
+
+    pygame.draw.rect(win, white, (680, 500, 110, 70))
+    text = pygame.font.SysFont(
+        None, 40).render("Main", True, black)
+    win.blit(text, [700, 510])
+    text = pygame.font.SysFont(
+        None, 40).render("Menu", True, black)
+    win.blit(text, [700, 540])
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if 680 <= mx <= 790 and 400 <= my <= 470:
+                    play()
+                elif 680 <= mx <= 790 and 500 <= my <= 570:
+                    main()
+        pygame.display.update()
+        Clock.tick(fps)
+
+
 def minimaxPro(x, y, alpha, beta, isMaximizing):
-    global grid
-    if isWinner(z, x, y):
+    global grid, turn
+    if isWinner(turn, x, y):
         return 1
-    if isWinner(3-z, x, y):
+    if isWinner(3-turn, x, y):
         return -1
     if isTie():
         return 0
     if isMaximizing:
         bestScore = -math.inf
-        for i in range(column):
-            if grid[row - 1 - i][i] == 0:
-                grid[row - 1 - i][i] == z
-                score = minimaxPro(row - 1 - i, i, alpha, beta, False)
-                grid[row - 1 - i][i] == 0
-                bestScore = max(score, bestScore)
-                alpha = max(alpha, score)
-                if beta <= alpha:
-                    break
+        for j in range(7):
+            for i in range(5, -1, -1):
+                if not grid[i][j]:
+                    grid[i][j] = turn
+                    score = minimaxPro(i, j, alpha, beta, False)
+                    grid[i][j] == 0
+                    bestScore = max(score, bestScore)
+                    alpha = max(alpha, score)
+                    if beta <= alpha:
+                        break
         return bestScore
     else:
         bestScore = math.inf
-        for i in range(column):
-            for j in range(row):
-                if grid[row - 1 - i][i] == 0:
-                    grid[row - 1 - i][i] == 3-z
-                    score = minimaxPro(row - 1 - i, i, alpha, beta, False)
-                    grid[row - 1 - i][i] == 0
+        for j in range(7):
+            for i in range(5, -1, -1):
+                if not grid[i][j]:
+                    grid[i][j] = 3-turn
+                    score = minimaxPro(i, j, alpha, beta, True)
+                    grid[i][j] == 0
                     bestScore = min(score, bestScore)
                     beta = min(beta, score)
                     if beta <= alpha:
@@ -140,94 +187,197 @@ def minimaxPro(x, y, alpha, beta, isMaximizing):
         return bestScore
 
 
-def bestMove():
-    global c, z, grid
+def AI():
+    global grid, turn
     bestScore = -math.inf
-    for i in range(column):
-        if grid[row - 1 - i][i] == 0:
-            grid[row - 1 - i][i] = z
-            score = minimaxPro(i, j, -math.inf, math.inf, False)
-            grid[i][j] = 0
-            if score > bestScore:
-                bestScore = score
-                p = [i, j]
-    grid[row - 1 - i][p[1]] = z
-    for j in range(row - 1 - i):
-        colorIt(c, j, p[1])
-        pygame.display.update()
-        time.sleep(0.05)
-        colorIt(black, j, p[1])
-        drawGrid(white, row, column)
-        pygame.display.update()
-    colorIt(c, row - 1 - i, p[1])
-    pygame.display.update()
-    if isWinner(z, row - 1 - i, p[1]):
-        msg = pygame.font.SysFont(None, 100).render(
-            "GAME OVER", True, white)
-        win.blit(msg, [width//2-210, height//2-35])
-        pygame.display.update()
-        time.sleep(3)
-        exit()
-    if isTie():
-        msg = pygame.font.SysFont(None, 100).render(
-            "MATCH TIE!", True, white)
-        win.blit(msg, [width//2-210, height//2-35])
-        pygame.display.update()
-        time.sleep(3)
-        exit()
-    c = blue
-    z = 3 - z
-
-
-def play(l):
-    global c, z
-    for i in range(row):
-        if grid[row - 1 - i][l[1]] == 0:
-            grid[row - 1 - i][l[1]] = z
-            for j in range(row - 1 - i):
-                colorIt(c, j, l[1])
+    for j in range(7):
+        for i in range(5, -1, -1):
+            if not grid[i][j]:
+                grid[i][j] = turn
+                score = minimaxPro(i, j, -math.inf, math.inf, False)
+                grid[i][j] == 0
+                if score > bestScore:
+                    bestScore = score
+                    x = i
+    for i in range(5, -1, -1):
+        if not grid[i][x]:
+            grid[i][x] = turn
+            for j in range(6):
+                if turn == 1:
+                    nought(red, (67+93*x, 67+93*j))
+                else:
+                    nought(green, (67+93*x, 67+93*j))
                 pygame.display.update()
-                time.sleep(0.05)
-                colorIt(black, j, l[1])
-                drawGrid(white, row, column)
-                pygame.display.update()
-            colorIt(c, row - 1 - i, l[1])
-            pygame.display.update()
-            if isWinner(z, row - 1 - i, l[1]):
-                msg = pygame.font.SysFont(None, 100).render(
-                    "GAME OVER", True, white)
-                win.blit(msg, [width//2-210, height//2-35])
-                pygame.display.update()
-                time.sleep(3)
-                exit()
-            if isTie():
-                msg = pygame.font.SysFont(None, 100).render(
-                    "MATCH TIE!", True, white)
-                win.blit(msg, [width//2-210, height//2-35])
-                pygame.display.update()
-                time.sleep(3)
-                exit()
-            if c == red:
-                c = yellow
+                if i == j:
+                    break
+                pygame.time.delay(50)
+                pygame.draw.rect(
+                    win, blue, (24+93*x, 24+93*j, 86, 86))
+            if isWinner(turn, i, x):
+                endText("AI WIN!")
+            elif isTie():
+                endText("TIE")
+            turn = 3-turn
+            if turn == 1:
+                drawGrid(red)
             else:
-                c = red
-            z = 3 - z
-            # bestMove()
+                drawGrid(green)
             break
 
 
-def main(run):
-    global c
-    while run:
-        pygame.time.delay(100)
+def play():
+    global turn, grid
+    win.fill(blue)
+    if turn == 1:
+        drawGrid(red)
+    else:
+        drawGrid(green)
+
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = pygame.mouse.get_pos()
-                play(convert(mx, my))
-        drawGrid(c, row, column)
+                x = (mx-20)//93
+                if 0 <= x <= 6:
+                    for i in range(5, -1, -1):
+                        if not grid[i][x]:
+                            grid[i][x] = turn
+                            for j in range(6):
+                                if turn == 1:
+                                    nought(red, (67+93*x, 67+93*j))
+                                else:
+                                    nought(green, (67+93*x, 67+93*j))
+                                pygame.display.update()
+                                if i == j:
+                                    break
+                                pygame.time.delay(50)
+                                pygame.draw.rect(
+                                    win, blue, (24+93*x, 24+93*j, 86, 86))
+                            if isWinner(turn, i, x):
+                                endText("YOU WIN!")
+                            elif isTie():
+                                endText("TIE")
+                            turn = 3-turn
+                            if turn == 1:
+                                drawGrid(red)
+                            else:
+                                drawGrid(green)
+                            if level != -1:
+                                AI()
+                            break
         pygame.display.update()
+        Clock.tick(fps)
 
 
-main(True)
+def difficulty():
+    global level
+    win.fill(blue)
+    text = pygame.font.SysFont(
+        None, 80).render("Select Difficulty!", True, white)
+    win.blit(text, [200, 60])
+
+    pygame.draw.rect(win, white, (260, 130, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("Easy", True, black)
+    win.blit(text, [300, 140])
+
+    pygame.draw.rect(win, white, (260, 200, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("Medium", True, black)
+    win.blit(text, [300, 210])
+
+    pygame.draw.rect(win, white, (260, 270, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("Hard", True, black)
+    win.blit(text, [300, 280])
+
+    pygame.draw.rect(win, white, (260, 340, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("Impossible", True, black)
+    win.blit(text, [300, 350])
+
+    pygame.draw.rect(win, white, (260, 410, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("Main Menu", True, black)
+    win.blit(text, [300, 420])
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if 260 <= mx <= 560 and 130 <= my <= 190:
+                    level = 0
+                    play()
+                elif 260 <= mx <= 560 and 200 <= my <= 260:
+                    level = 1
+                    play()
+                elif 260 <= mx <= 560 and 270 <= my <= 330:
+                    level = 2
+                    play()
+                elif 260 <= mx <= 560 and 340 <= my <= 400:
+                    level = 3
+                    play()
+                elif 260 <= mx <= 560 and 410 <= my <= 460:
+                    main()
+        pygame.display.update()
+        Clock.tick(fps)
+
+
+def main():
+    win.fill(blue)
+    text = pygame.font.SysFont(
+        None, 100).render("Connect 4", True, white)
+    win.blit(text, [240, 100])
+
+    pygame.draw.rect(win, white, (260, 200, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("YOU VS FRIEND", True, black)
+    win.blit(text, [275, 210])
+
+    pygame.draw.rect(win, white, (260, 300, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("YOU VS AI", True, black)
+    win.blit(text, [300, 310])
+
+    pygame.draw.rect(win, white, (260, 400, 300, 60))
+    text = pygame.font.SysFont(
+        None, 50).render("EXIT!", True, black)
+    win.blit(text, [330, 410])
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                if 260 <= mx <= 560 and 200 <= my <= 260:
+                    level = -1
+                    play()
+                elif 260 <= mx <= 560 and 300 <= my <= 360:
+                    difficulty()
+                elif 260 <= mx <= 560 and 400 <= my <= 460:
+                    exit()
+        pygame.display.update()
+        Clock.tick(fps)
+
+
+pygame.init()
+pygame.display.set_caption("Connect 4")
+win = pygame.display.set_mode((800, 600))
+Clock = pygame.time.Clock()
+fps = 10
+black = (0, 0, 0)
+white = (255, 255, 255)
+red = (250, 51, 51)
+green = (51, 250, 89)
+blue = (0, 0, 128)
+
+
+grid = [[0 for x in range(7)] for y in range(6)]
+level = -1
+turn = random.randint(1, 2)
+main()

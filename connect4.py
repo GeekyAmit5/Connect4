@@ -24,59 +24,70 @@ def nought(color, center):
     pygame.draw.circle(win, color, center, 43)
 
 
-def isWinner(turn, x, y):
+def isWinner(turn):
     streak = 0
-    for i in range(-3, 4):
-        try:
-            if grid[x+i][y] == turn:
+    for i in range(6):
+        for j in range(7):
+            if grid[i][j] == turn:
                 streak += 1
                 if streak == 4:
                     return True
             else:
                 streak = 0
-                if i > 0:
+                if j > 2:
                     break
-        except:
-            pass
-    streak = 0
-    for i in range(-3, 4):
-        try:
-            if grid[x][y+i] == turn:
+
+    for i in range(7):
+        for j in range(6):
+            if grid[j][i] == turn:
                 streak += 1
                 if streak == 4:
                     return True
             else:
                 streak = 0
-                if i > 0:
+                if j > 1:
                     break
-        except:
-            pass
-    streak = 0
-    for i in range(-3, 4):
-        try:
-            if grid[x+i][y+i] == turn:
+
+    for i in range(3):
+        for j in range(6-i):
+            if grid[i+j][j] == turn:
                 streak += 1
                 if streak == 4:
                     return True
             else:
                 streak = 0
-                if i > 0:
+                if j+i > 1:
                     break
-        except:
-            pass
-    streak = 0
-    for i in range(-3, 4):
-        try:
-            if grid[x+i][y-i] == turn:
+
+    for i in range(3):
+        for j in range(6-i):
+            if grid[j][i+j+1] == turn:
                 streak += 1
                 if streak == 4:
                     return True
             else:
                 streak = 0
-                if i > 0:
+                if i+j > 1:
                     break
-        except:
-            pass
+
+    for i in range(3, 6):
+        for j in range(1+i):
+            if grid[i-j][j] == turn:
+                streak += 1
+                if streak == 4:
+                    return True
+            else:
+                streak = 0
+    streak = 0
+
+    for i in range(1, 4):
+        for j in range(5, -2+i, -1):
+            if grid[j][i+5-j] == turn:
+                streak += 1
+                if streak == 4:
+                    return True
+            else:
+                streak = 0
     return False
 
 
@@ -151,11 +162,11 @@ def endText(msg):
         Clock.tick(fps)
 
 
-def minimaxPro(x, y, alpha, beta, isMaximizing):
-    global grid, turn
-    if isWinner(turn, x, y):
+def minimaxPro(alpha, beta, isMaximizing):
+    global grid
+    if isWinner(turn):
         return 1
-    if isWinner(3-turn, x, y):
+    if isWinner(3-turn):
         return -1
     if isTie():
         return 0
@@ -165,8 +176,8 @@ def minimaxPro(x, y, alpha, beta, isMaximizing):
             for i in range(5, -1, -1):
                 if not grid[i][j]:
                     grid[i][j] = turn
-                    score = minimaxPro(i, j, alpha, beta, False)
-                    grid[i][j] == 0
+                    score = minimaxPro(alpha, beta, False)
+                    grid[i][j] = 0
                     bestScore = max(score, bestScore)
                     alpha = max(alpha, score)
                     if beta <= alpha:
@@ -178,8 +189,8 @@ def minimaxPro(x, y, alpha, beta, isMaximizing):
             for i in range(5, -1, -1):
                 if not grid[i][j]:
                     grid[i][j] = 3-turn
-                    score = minimaxPro(i, j, alpha, beta, True)
-                    grid[i][j] == 0
+                    score = minimaxPro(alpha, beta, True)
+                    grid[i][j] = 0
                     bestScore = min(score, bestScore)
                     beta = min(beta, score)
                     if beta <= alpha:
@@ -190,15 +201,16 @@ def minimaxPro(x, y, alpha, beta, isMaximizing):
 def AI():
     global grid, turn
     bestScore = -math.inf
+    x = 0
     for j in range(7):
         for i in range(5, -1, -1):
             if not grid[i][j]:
                 grid[i][j] = turn
-                score = minimaxPro(i, j, -math.inf, math.inf, False)
-                grid[i][j] == 0
+                score = minimaxPro(-math.inf, math.inf, False)
+                grid[i][j] = 0
                 if score > bestScore:
                     bestScore = score
-                    x = i
+                    x = j
     for i in range(5, -1, -1):
         if not grid[i][x]:
             grid[i][x] = turn
@@ -213,7 +225,7 @@ def AI():
                 pygame.time.delay(50)
                 pygame.draw.rect(
                     win, blue, (24+93*x, 24+93*j, 86, 86))
-            if isWinner(turn, i, x):
+            if isWinner(turn):
                 endText("AI WIN!")
             elif isTie():
                 endText("TIE")
@@ -255,7 +267,7 @@ def play():
                                 pygame.time.delay(50)
                                 pygame.draw.rect(
                                     win, blue, (24+93*x, 24+93*j, 86, 86))
-                            if isWinner(turn, i, x):
+                            if isWinner(turn):
                                 endText("YOU WIN!")
                             elif isTie():
                                 endText("TIE")
